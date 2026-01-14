@@ -1,54 +1,52 @@
-package com.example.templateplugin;
+package com.mars.randomteleport;
 
 /**
- * Main plugin class.
+ * Random Teleport Plugin - Randomly teleports players to safe locations.
  * 
- * TODO: Implement your plugin logic here.
- * 
- * @author YourName
+ * @author Mars
  * @version 1.0.0
  */
-public class TemplatePlugin {
+public class RandomTeleportPlugin {
 
-    private static TemplatePlugin instance;
-    
+    private static RandomTeleportPlugin instance;
+
     /**
      * Constructor - Called when plugin is loaded.
      */
-    public TemplatePlugin() {
+    public RandomTeleportPlugin() {
         instance = this;
-        System.out.println("[TemplatePlugin] Plugin loaded!");
+        System.out.println("[RandomTeleport] Plugin loaded!");
     }
-    
+
     /**
      * Called when plugin is enabled.
      */
     public void onEnable() {
-        System.out.println("[TemplatePlugin] Plugin enabled!");
-        
+        System.out.println("[RandomTeleport] Plugin enabled!");
+
         // TODO: Initialize your plugin here
         // - Load configuration
         // - Register event listeners
         // - Register commands
         // - Start services
     }
-    
+
     /**
      * Called when plugin is disabled.
      */
     public void onDisable() {
-        System.out.println("[TemplatePlugin] Plugin disabled!");
-        
+        System.out.println("[RandomTeleport] Plugin disabled!");
+
         // TODO: Cleanup your plugin here
         // - Save data
         // - Stop services
         // - Close connections
     }
-    
+
     /**
      * Get plugin instance.
      */
-    public static TemplatePlugin getInstance() {
+    public static RandomTeleportPlugin getInstance() {
         return instance;
     }
 }

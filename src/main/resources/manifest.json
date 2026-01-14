@@ -1,17 +1,17 @@
 {
-  "Group": "TemplatePlugin",
-  "Name": "TemplatePlugin",
+  "Group": "RandomTeleport",
+  "Name": "RandomTeleport",
   "Version": "1.0.0",
-  "Description": "A Hytale plugin template",
+  "Description": "Randomly teleports players to safe locations in the world",
   "Authors": [
     {
-      "Name": "YourName",
-      "Email": "your.email@example.com",
-      "Url": "https://your-website.com"
+      "Name": "Vorlas",
+      "Email": "hyvorlas@gmail.com",
+      "Url": "https://github.com/Vorlas"
     }
   ],
-  "Website": "https://github.com/yourusername/hytale-plugin-template",
-  "Main": "com.example.templateplugin.TemplatePlugin",
+  "Website": "https://github.com/Vorlas/hytale-random-teleport",
+  "Main": "com.mars.randomteleport.RandomTeleportPlugin",
   "ServerVersion": "*",
   "Dependencies": {},
   "OptionalDependencies": {},
