@@ -32,8 +32,8 @@ import java.util.concurrent.CompletableFuture;
 public class RandomTeleportCommand extends AbstractAsyncCommand {
 
     // Teleport distance range from spawn
-    private static final int MIN_DISTANCE = 2000;
-    private static final int MAX_DISTANCE = 5000;
+    private static final int MIN_DISTANCE = 5000;
+    private static final int MAX_DISTANCE = 9000;
 
     // Cooldown: 1 hour in milliseconds
     private static final long COOLDOWN_MS = 60 * 60 * 1000;
@@ -47,7 +47,7 @@ public class RandomTeleportCommand extends AbstractAsyncCommand {
      * Constructor - registers the command with name "rtp"
      */
     public RandomTeleportCommand() {
-        super("rtp", "Randomly teleports you 2000-5000 blocks from spawn");
+        super("rtp", "Randomly teleports you 5000-9000 blocks from spawn");
         this.addAliases("randomtp", "randomteleport");
         this.setPermissionGroup(GameMode.Adventure);
     }
@@ -78,7 +78,7 @@ public class RandomTeleportCommand extends AbstractAsyncCommand {
                             long remainingMs = COOLDOWN_MS - timePassed;
                             String remainingTime = formatTime(remainingMs);
                             player.sendMessage(
-                                    Message.raw("§cYou must wait " + remainingTime + " before using /rtp again!"));
+                                    Message.raw("You must wait " + remainingTime + " before using /rtp again!"));
                             return;
                         }
                     }
@@ -109,11 +109,11 @@ public class RandomTeleportCommand extends AbstractAsyncCommand {
 
                     // Notify player
                     player.sendMessage(Message.raw(String.format(
-                            "§aTeleported to X: %.0f, Y: %.0f, Z: %.0f (%.0f blocks from spawn)",
+                            "Teleported to X: %.0f, Y: %.0f, Z: %.0f (%.0f blocks from spawn)",
                             randomX, teleportY, randomZ, distance)));
                 }, world);
             } else {
-                player.sendMessage(Message.raw("§cYou must be in a world to use this command!"));
+                player.sendMessage(Message.raw("You must be in a world to use this command!"));
                 return CompletableFuture.completedFuture(null);
             }
         } else {
