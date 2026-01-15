@@ -3,6 +3,7 @@ package com.mars.randomteleport;
 import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
 import com.mars.randomteleport.commands.RandomTeleportCommand;
+import com.mars.randomteleport.config.RandomTeleportConfig;
 import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
 
 import java.util.logging.Level;
@@ -37,8 +38,11 @@ public class RandomTeleportPlugin extends JavaPlugin {
     protected void setup() {
         super.setup();
 
+        // Initialize configuration
+        RandomTeleportConfig config = new RandomTeleportConfig(this.getDataDirectory());
+
         // Register the /rtp command
-        this.getCommandRegistry().registerCommand(new RandomTeleportCommand());
+        this.getCommandRegistry().registerCommand(new RandomTeleportCommand(config));
 
         this.getLogger().at(Level.INFO).log("RandomTeleport plugin enabled! Use /rtp to teleport randomly.");
     }
