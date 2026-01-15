@@ -208,10 +208,6 @@ public class RandomTeleportCommand extends AbstractAsyncCommand {
                     if (transform != null) {
                         Vector3d target = new Vector3d(randomX, teleportY, randomZ);
 
-                        // Invulnerability disabled - causes entity corruption crashes
-                        // TODO: Investigate proper way to add/remove Invulnerable component
-                        // int invulSeconds = config.getInvulnerabilitySeconds();
-
                         transform.teleportPosition(target);
 
                         Position pos = new Position(target.x, target.y, target.z);

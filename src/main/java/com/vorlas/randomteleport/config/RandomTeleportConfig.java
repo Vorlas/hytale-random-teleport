@@ -77,10 +77,6 @@ public class RandomTeleportConfig {
         return data.maxHeight;
     }
 
-    public int getInvulnerabilitySeconds() {
-        return data.invulnerabilitySeconds;
-    }
-
     public String getMessageCooldown() {
         return data.messageCooldown;
     }
@@ -125,7 +121,6 @@ public class RandomTeleportConfig {
         double movementThreshold = 0.5;
         int minHeight = 120;
         int maxHeight = 200;
-        int invulnerabilitySeconds = 5;
 
         String messageCooldown = "You must wait {time} before using /rtp again!";
         String messageNoWorld = "You must be in a world to use this command!";
