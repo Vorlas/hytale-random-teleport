@@ -1,4 +1,4 @@
-package com.mars.randomteleport.utils;
+package com.vorlas.randomteleport.utils;
 
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
@@ -8,7 +8,7 @@ import com.hypixel.hytale.server.core.modules.entity.component.TransformComponen
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
-import com.mars.randomteleport.config.RandomTeleportConfig;
+import com.vorlas.randomteleport.config.RandomTeleportConfig;
 
 import java.util.Map;
 import java.util.UUID;

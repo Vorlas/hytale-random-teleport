@@ -1,9 +1,9 @@
-package com.mars.randomteleport;
+package com.vorlas.randomteleport;
 
 import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
-import com.mars.randomteleport.commands.RandomTeleportCommand;
-import com.mars.randomteleport.config.RandomTeleportConfig;
+import com.vorlas.randomteleport.commands.RandomTeleportCommand;
+import com.vorlas.randomteleport.config.RandomTeleportConfig;
 import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
 
 import java.util.logging.Level;

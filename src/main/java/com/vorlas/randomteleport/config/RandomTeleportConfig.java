@@ -1,4 +1,4 @@
-package com.mars.randomteleport.config;
+package com.vorlas.randomteleport.config;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -77,6 +77,10 @@ public class RandomTeleportConfig {
         return data.maxHeight;
     }
 
+    public int getInvulnerabilitySeconds() {
+        return data.invulnerabilitySeconds;
+    }
+
     public String getMessageCooldown() {
         return data.messageCooldown;
     }
@@ -105,6 +109,14 @@ public class RandomTeleportConfig {
         return data.messageTeleported;
     }
 
+    public String getMessageWarning1() {
+        return data.messageWarning1;
+    }
+
+    public String getMessageWarning2() {
+        return data.messageWarning2;
+    }
+
     private static class ConfigData {
         int cooldownSeconds = 3600;
         int warmupSeconds = 5;
@@ -113,6 +125,7 @@ public class RandomTeleportConfig {
         double movementThreshold = 0.5;
         int minHeight = 120;
         int maxHeight = 200;
+        int invulnerabilitySeconds = 5;
 
         String messageCooldown = "You must wait {time} before using /rtp again!";
         String messageNoWorld = "You must be in a world to use this command!";
@@ -121,5 +134,7 @@ public class RandomTeleportConfig {
         String messageNoSafeSpot = "Could not find a safe landing spot. Try again!";
         String messageError = "Error scanning for safe location.";
         String messageTeleported = "Teleported to X: {x}, Y: {y}, Z: {z} ({distance} blocks from spawn)";
+        String messageWarning1 = "WARNING: RTP is in early development!";
+        String messageWarning2 = "May teleport to dangerous locations. Move to cancel.";
     }
 }
