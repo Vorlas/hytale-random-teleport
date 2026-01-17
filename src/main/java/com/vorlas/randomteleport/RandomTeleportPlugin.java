@@ -14,8 +14,8 @@ import java.util.logging.Level;
  * Command: /rtp - Teleports player 2000-5000 blocks from spawn with 1 hour
  * cooldown
  * 
- * @author Mars
- * @version 1.0.0
+ * @author Vorlas
+ * @version 1.0.5
  */
 public class RandomTeleportPlugin extends JavaPlugin {
 

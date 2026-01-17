@@ -5,9 +5,16 @@ plugins {
 
 import org.gradle.internal.os.OperatingSystem
 
+// Detect CI environment (GitHub Actions, etc.)
+ext.isCI = System.getenv("CI") != null || System.getenv("GITHUB_ACTIONS") != null
+
 ext {
     if (project.hasProperty('hytale_home')) {
         hytaleHome = project.findProperty('hytale_home')
+    }
+    else if (isCI) {
+        // In CI, we don't have Hytale installed - use a stub path
+        hytaleHome = null
     }
     else {
         def os = OperatingSystem.current()
@@ -26,11 +33,14 @@ ext {
     }
 }
 
-if (!project.hasProperty('hytaleHome')) {
-    throw new GradleException('Your Hytale install could not be detected automatically. If you are on an unsupported platform or using a custom install location, please define the install location using the hytale_home property.');
-}
-else if (!file(project.findProperty('hytaleHome')).exists()) {
-    throw new GradleException("Failed to find Hytale at the expected location. Please make sure you have installed the game. The expected location can be changed using the hytale_home property. Currently looking in ${project.findProperty('hytaleHome')}")
+// Skip Hytale installation check in CI environments
+if (!isCI) {
+    if (!project.hasProperty('hytaleHome') || hytaleHome == null) {
+        throw new GradleException('Your Hytale install could not be detected automatically. If you are on an unsupported platform or using a custom install location, please define the install location using the hytale_home property.');
+    }
+    else if (!file(project.findProperty('hytaleHome')).exists()) {
+        throw new GradleException("Failed to find Hytale at the expected location. Please make sure you have installed the game. The expected location can be changed using the hytale_home property. Currently looking in ${project.findProperty('hytaleHome')}")
+    }
 }
 
 java {
