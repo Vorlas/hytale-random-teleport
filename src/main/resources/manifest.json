@@ -1,7 +1,7 @@
 {
     "Group": "",
     "Name": "RandomTeleport",
-    "Version": "1.0.4",
+    "Version": "1.0.5",
     "Description": "Randomly teleports players to safe locations in the world",
     "Authors": [
         {
