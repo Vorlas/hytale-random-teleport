@@ -1,5 +1,53 @@
 {
   "pluginName": "RandomTeleport",
-  "version": "1.0.2",
-  "debugMode": false
+  "version": "1.0.3",
+  "debugMode": false,
+  "permissions": {
+    "use": "randomteleport.use",
+    "bypassCooldown": "randomteleport.bypass.cooldown",
+    "bypassWarmup": "randomteleport.bypass.warmup"
+  },
+  "tiers": {
+    "diamond": {
+      "permission": "randomteleport.tier.diamond",
+      "cooldownSeconds": 300,
+      "warmupSeconds": 1
+    },
+    "gold": {
+      "permission": "randomteleport.tier.gold",
+      "cooldownSeconds": 900,
+      "warmupSeconds": 2
+    },
+    "silver": {
+      "permission": "randomteleport.tier.silver",
+      "cooldownSeconds": 1800,
+      "warmupSeconds": 3
+    },
+    "bronze": {
+      "permission": "randomteleport.tier.bronze",
+      "cooldownSeconds": 2700,
+      "warmupSeconds": 5
+    }
+  },
+  "defaults": {
+    "cooldownSeconds": 3600,
+    "warmupSeconds": 5,
+    "minDistance": 5000,
+    "maxDistance": 9000,
+    "movementThreshold": 0.5,
+    "minHeight": 120,
+    "maxHeight": 200
+  },
+  "messages": {
+    "cooldown": "You must wait {time} before using /rtp again!",
+    "noPermission": "You don't have permission to use /rtp!",
+    "noWorld": "You must be in a world to use this command!",
+    "warmupStart": "Teleporting in {seconds} seconds... Don't move!",
+    "movedCancelled": "Teleportation cancelled! You moved too much.",
+    "noSafeSpot": "Could not find a safe landing spot. Try again!",
+    "error": "Error scanning for safe location.",
+    "teleported": "Teleported to X: {x}, Y: {y}, Z: {z} ({distance} blocks from spawn)",
+    "warning1": "WARNING: RTP is in early development!",
+    "warning2": "May teleport to dangerous locations. Move to cancel."
+  }
 }

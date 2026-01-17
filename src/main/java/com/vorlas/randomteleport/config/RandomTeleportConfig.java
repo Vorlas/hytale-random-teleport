@@ -7,6 +7,8 @@ import java.io.Reader;
 import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class RandomTeleportConfig {
 
@@ -49,71 +51,108 @@ public class RandomTeleportConfig {
         }
     }
 
-    public int getCooldownSeconds() {
-        return data.cooldownSeconds;
+    // Permission getters
+    public String getUsePermission() {
+        return data.permissions.use;
     }
 
-    public int getWarmupSeconds() {
-        return data.warmupSeconds;
+    public String getBypassCooldownPermission() {
+        return data.permissions.bypassCooldown;
+    }
+
+    public String getBypassWarmupPermission() {
+        return data.permissions.bypassWarmup;
+    }
+
+    // Tier getters
+    public Map<String, TierData> getTiers() {
+        return data.tiers;
+    }
+
+    // Default getters
+    public int getDefaultCooldownSeconds() {
+        return data.defaults.cooldownSeconds;
+    }
+
+    public int getDefaultWarmupSeconds() {
+        return data.defaults.warmupSeconds;
     }
 
     public int getMinDistance() {
-        return data.minDistance;
+        return data.defaults.minDistance;
     }
 
     public int getMaxDistance() {
-        return data.maxDistance;
+        return data.defaults.maxDistance;
     }
 
     public double getMovementThreshold() {
-        return data.movementThreshold;
+        return data.defaults.movementThreshold;
     }
 
     public int getMinHeight() {
-        return data.minHeight;
+        return data.defaults.minHeight;
     }
 
     public int getMaxHeight() {
-        return data.maxHeight;
+        return data.defaults.maxHeight;
     }
 
+    // Message getters
     public String getMessageCooldown() {
-        return data.messageCooldown;
+        return data.messages.cooldown;
+    }
+
+    public String getMessageNoPermission() {
+        return data.messages.noPermission;
     }
 
     public String getMessageNoWorld() {
-        return data.messageNoWorld;
+        return data.messages.noWorld;
     }
 
     public String getMessageWarmupStart() {
-        return data.messageWarmupStart;
+        return data.messages.warmupStart;
     }
 
     public String getMessageMovedCancelled() {
-        return data.messageMovedCancelled;
+        return data.messages.movedCancelled;
     }
 
     public String getMessageNoSafeSpot() {
-        return data.messageNoSafeSpot;
+        return data.messages.noSafeSpot;
     }
 
     public String getMessageError() {
-        return data.messageError;
+        return data.messages.error;
     }
 
     public String getMessageTeleported() {
-        return data.messageTeleported;
+        return data.messages.teleported;
     }
 
     public String getMessageWarning1() {
-        return data.messageWarning1;
+        return data.messages.warning1;
     }
 
     public String getMessageWarning2() {
-        return data.messageWarning2;
+        return data.messages.warning2;
     }
 
-    private static class ConfigData {
+    // Inner data classes
+    public static class TierData {
+        public String permission = "";
+        public int cooldownSeconds = 600;
+        public int warmupSeconds = 5;
+    }
+
+    private static class PermissionsData {
+        String use = "randomteleport.use";
+        String bypassCooldown = "randomteleport.bypass.cooldown";
+        String bypassWarmup = "randomteleport.bypass.warmup";
+    }
+
+    private static class DefaultsData {
         int cooldownSeconds = 3600;
         int warmupSeconds = 5;
         int minDistance = 5000;
@@ -121,15 +160,58 @@ public class RandomTeleportConfig {
         double movementThreshold = 0.5;
         int minHeight = 120;
         int maxHeight = 200;
+    }
 
-        String messageCooldown = "You must wait {time} before using /rtp again!";
-        String messageNoWorld = "You must be in a world to use this command!";
-        String messageWarmupStart = "Teleporting in {seconds} seconds... Don't move!";
-        String messageMovedCancelled = "Teleportation cancelled! You moved too much.";
-        String messageNoSafeSpot = "Could not find a safe landing spot. Try again!";
-        String messageError = "Error scanning for safe location.";
-        String messageTeleported = "Teleported to X: {x}, Y: {y}, Z: {z} ({distance} blocks from spawn)";
-        String messageWarning1 = "WARNING: RTP is in early development!";
-        String messageWarning2 = "May teleport to dangerous locations. Move to cancel.";
+    private static class MessagesData {
+        String cooldown = "You must wait {time} before using /rtp again!";
+        String noPermission = "You don't have permission to use /rtp!";
+        String noWorld = "You must be in a world to use this command!";
+        String warmupStart = "Teleporting in {seconds} seconds... Don't move!";
+        String movedCancelled = "Teleportation cancelled! You moved too much.";
+        String noSafeSpot = "Could not find a safe landing spot. Try again!";
+        String error = "Error scanning for safe location.";
+        String teleported = "Teleported to X: {x}, Y: {y}, Z: {z} ({distance} blocks from spawn)";
+        String warning1 = "WARNING: RTP is in early development!";
+        String warning2 = "May teleport to dangerous locations. Move to cancel.";
+    }
+
+    private static class ConfigData {
+        String pluginName = "RandomTeleport";
+        String version = "1.0.3";
+        boolean debugMode = false;
+        PermissionsData permissions = new PermissionsData();
+        Map<String, TierData> tiers = createDefaultTiers();
+        DefaultsData defaults = new DefaultsData();
+        MessagesData messages = new MessagesData();
+
+        private static Map<String, TierData> createDefaultTiers() {
+            Map<String, TierData> tiers = new LinkedHashMap<>();
+
+            TierData diamond = new TierData();
+            diamond.permission = "randomteleport.tier.diamond";
+            diamond.cooldownSeconds = 300;
+            diamond.warmupSeconds = 1;
+            tiers.put("diamond", diamond);
+
+            TierData gold = new TierData();
+            gold.permission = "randomteleport.tier.gold";
+            gold.cooldownSeconds = 900;
+            gold.warmupSeconds = 2;
+            tiers.put("gold", gold);
+
+            TierData silver = new TierData();
+            silver.permission = "randomteleport.tier.silver";
+            silver.cooldownSeconds = 1800;
+            silver.warmupSeconds = 3;
+            tiers.put("silver", silver);
+
+            TierData bronze = new TierData();
+            bronze.permission = "randomteleport.tier.bronze";
+            bronze.cooldownSeconds = 2700;
+            bronze.warmupSeconds = 5;
+            tiers.put("bronze", bronze);
+
+            return tiers;
+        }
     }
 }

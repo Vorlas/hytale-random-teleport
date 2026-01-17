@@ -44,6 +44,7 @@ public class RandomTeleportCommand extends AbstractAsyncCommand {
         super("rtp", "Randomly teleports you away from spawn");
         this.addAliases("randomtp", "randomteleport");
         this.setPermissionGroup(GameMode.Adventure);
+        this.requirePermission(config.getUsePermission());
         this.warmupManager = new WarmupManager(config);
         this.config = config;
     }
@@ -52,11 +53,55 @@ public class RandomTeleportCommand extends AbstractAsyncCommand {
         this.warmupManager.shutdown();
     }
 
+    /**
+     * Get the cooldown in seconds for a player based on their permission tier.
+     * Checks from highest tier (diamond) to lowest (bronze), returns default if no
+     * tier.
+     */
+    private int getCooldownForPlayer(Player player) {
+        // Check bypass first
+        if (player.hasPermission(config.getBypassCooldownPermission(), false)) {
+            return 0;
+        }
+
+        // Check tiers from highest to lowest (diamond -> gold -> silver -> bronze)
+        for (Map.Entry<String, RandomTeleportConfig.TierData> entry : config.getTiers().entrySet()) {
+            if (player.hasPermission(entry.getValue().permission, false)) {
+                return entry.getValue().cooldownSeconds;
+            }
+        }
+
+        // No tier found, use default
+        return config.getDefaultCooldownSeconds();
+    }
+
+    /**
+     * Get the warmup in seconds for a player based on their permission tier.
+     */
+    private int getWarmupForPlayer(Player player) {
+        // Check bypass first
+        if (player.hasPermission(config.getBypassWarmupPermission(), false)) {
+            return 0;
+        }
+
+        // Check tiers from highest to lowest
+        for (Map.Entry<String, RandomTeleportConfig.TierData> entry : config.getTiers().entrySet()) {
+            if (player.hasPermission(entry.getValue().permission, false)) {
+                return entry.getValue().warmupSeconds;
+            }
+        }
+
+        // No tier found, use default
+        return config.getDefaultWarmupSeconds();
+    }
+
     @NonNullDecl
     @Override
     protected CompletableFuture<Void> executeAsync(CommandContext commandContext) {
         CommandSender sender = commandContext.sender();
         if (sender instanceof Player player) {
+            // Permission already checked via requirePermission() in constructor
+
             Ref<EntityStore> ref = player.getReference();
             if (ref != null && ref.isValid()) {
                 Store<EntityStore> store = ref.getStore();
@@ -68,9 +113,13 @@ public class RandomTeleportCommand extends AbstractAsyncCommand {
 
                     UUID playerUuid = playerRef.getUuid();
                     long currentTime = System.currentTimeMillis();
-                    long cooldownMs = config.getCooldownSeconds() * 1000L;
 
-                    if (cooldowns.containsKey(playerUuid)) {
+                    // Get tier-based cooldown for this player
+                    int cooldownSeconds = getCooldownForPlayer(player);
+                    long cooldownMs = cooldownSeconds * 1000L;
+
+                    // Check cooldown (skip if bypass or cooldown is 0)
+                    if (cooldownMs > 0 && cooldowns.containsKey(playerUuid)) {
                         long lastUsed = cooldowns.get(playerUuid);
                         long timePassed = currentTime - lastUsed;
 
@@ -87,9 +136,17 @@ public class RandomTeleportCommand extends AbstractAsyncCommand {
                     player.sendMessage(Message.raw(config.getMessageWarning1()));
                     player.sendMessage(Message.raw(config.getMessageWarning2()));
 
-                    warmupManager.startWarmup(playerRef, ref, store, world, config.getWarmupSeconds(), () -> {
+                    // Get tier-based warmup for this player
+                    int warmupSeconds = getWarmupForPlayer(player);
+
+                    if (warmupSeconds <= 0) {
+                        // Bypass warmup - teleport immediately
                         executeRandomTeleport(player, ref, store, world, playerUuid);
-                    });
+                    } else {
+                        warmupManager.startWarmup(playerRef, ref, store, world, warmupSeconds, () -> {
+                            executeRandomTeleport(player, ref, store, world, playerUuid);
+                        });
+                    }
 
                 }, world);
             } else {
