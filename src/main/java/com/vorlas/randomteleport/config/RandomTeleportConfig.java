@@ -98,6 +98,10 @@ public class RandomTeleportConfig {
         return data.defaults.maxHeight;
     }
 
+    public int getMaxAttempts() {
+        return data.defaults.maxAttempts;
+    }
+
     // Message getters
     public String getMessageCooldown() {
         return data.messages.cooldown;
@@ -131,6 +135,10 @@ public class RandomTeleportConfig {
         return data.messages.teleported;
     }
 
+    public String getMessageSearching() {
+        return data.messages.searching;
+    }
+
     public String getMessageWarning1() {
         return data.messages.warning1;
     }
@@ -160,6 +168,7 @@ public class RandomTeleportConfig {
         double movementThreshold = 0.5;
         int minHeight = 120;
         int maxHeight = 200;
+        int maxAttempts = 10;
     }
 
     private static class MessagesData {
@@ -173,6 +182,7 @@ public class RandomTeleportConfig {
         String teleported = "Teleported to X: {x}, Y: {y}, Z: {z} ({distance} blocks from spawn)";
         String warning1 = "WARNING: RTP is in early development!";
         String warning2 = "May teleport to dangerous locations. Move to cancel.";
+        String searching = "Searching for safe location... (attempt {attempt}/{max})";
     }
 
     private static class ConfigData {

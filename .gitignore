@@ -8,6 +8,9 @@ build/
 ### Hytale ###
 run/
 
+### Examples ###
+examples/
+
 ### IntelliJ IDEA ###
 .idea/
 *.iws

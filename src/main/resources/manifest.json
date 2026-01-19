@@ -13,8 +13,12 @@
     "Website": "https://github.com/Vorlas/hytale-random-teleport",
     "Main": "com.vorlas.randomteleport.RandomTeleportPlugin",
     "ServerVersion": "*",
-    "Dependencies": {},
-    "OptionalDependencies": {},
+    "Dependencies": {
+        
+    },
+    "OptionalDependencies": {
+        
+    },
     "DisabledByDefault": false,
     "IncludesAssetPack": true
 }

@@ -20,8 +20,6 @@ import com.hypixel.hytale.protocol.Direction;
 import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
 import com.vorlas.randomteleport.utils.WarmupManager;
 import com.vorlas.randomteleport.config.RandomTeleportConfig;
-import com.hypixel.hytale.server.core.universe.world.chunk.ChunkFlag;
-import com.hypixel.hytale.server.core.modules.entity.component.Invulnerable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -160,6 +158,26 @@ public class RandomTeleportCommand extends AbstractAsyncCommand {
 
     private void executeRandomTeleport(Player player, Ref<EntityStore> ref, Store<EntityStore> store, World world,
             UUID playerUuid) {
+        // Start the retry loop with attempt 1
+        tryRandomLocation(player, ref, store, world, playerUuid, 1);
+    }
+
+    private void tryRandomLocation(Player player, Ref<EntityStore> ref, Store<EntityStore> store, World world,
+            UUID playerUuid, int attempt) {
+        int maxAttempts = config.getMaxAttempts();
+
+        if (attempt > maxAttempts) {
+            player.sendMessage(Message.raw(config.getMessageNoSafeSpot()));
+            System.out.println("[RTP] Failed after " + maxAttempts + " attempts!");
+            return;
+        }
+
+        // Show searching message to player
+        String searchMsg = config.getMessageSearching()
+                .replace("{attempt}", String.valueOf(attempt))
+                .replace("{max}", String.valueOf(maxAttempts));
+        player.sendMessage(Message.raw(searchMsg));
+
         int min = config.getMinDistance();
         int max = config.getMaxDistance();
         double distance = min + random.nextDouble() * (max - min);
@@ -171,14 +189,15 @@ public class RandomTeleportCommand extends AbstractAsyncCommand {
         final int worldX = (int) Math.floor(randomX);
         final int worldZ = (int) Math.floor(randomZ);
         final double fDistance = distance;
+        final double fRandomX = randomX;
+        final double fRandomZ = randomZ;
         final int centerChunkX = worldX >> 4;
         final int centerChunkZ = worldZ >> 4;
 
-        System.out.println(
-                "[RTP] Target: X=" + worldX + " Z=" + worldZ + " (chunk " + centerChunkX + "," + centerChunkZ + ")");
+        System.out.println("[RTP] Attempt " + attempt + "/" + maxAttempts +
+                ": X=" + worldX + " Z=" + worldZ);
 
-        // Step 1: Preload 3x3 chunk grid around target
-        System.out.println("[RTP] Preloading 3x3 chunk grid...");
+        // Preload 3x3 chunk grid around target
         java.util.List<CompletableFuture<com.hypixel.hytale.server.core.universe.world.chunk.WorldChunk>> futures = new java.util.ArrayList<>();
 
         for (int dx = -1; dx <= 1; dx++) {
@@ -188,82 +207,25 @@ public class RandomTeleportCommand extends AbstractAsyncCommand {
             }
         }
 
-        // Wait for all chunks to load then delay 1 second for terrain generation
+        // Wait for all chunks to load then check for safe spot
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).thenRun(() -> {
-            System.out.println("[RTP] 9 chunks preloaded. Waiting 1s for terrain...");
-
-            CompletableFuture.delayedExecutor(1000, TimeUnit.MILLISECONDS).execute(() -> {
+            CompletableFuture.delayedExecutor(500, TimeUnit.MILLISECONDS).execute(() -> {
                 world.execute(() -> {
-                    long chunkIndex = ((long) centerChunkX << 32) | (centerChunkZ & 0xFFFFFFFFL);
-                    var chunk = world.getChunk(chunkIndex);
+                    int safeY = findSafeSurfaceY(world, worldX, worldZ);
 
-                    if (chunk == null) {
-                        player.sendMessage(Message.raw(config.getMessageError()));
-                        System.out.println("[RTP] Chunk null after preload!");
+                    if (safeY < 0) {
+                        // Try another location
+                        System.out.println("[RTP] Attempt " + attempt + " failed - no safe spot, retrying...");
+                        tryRandomLocation(player, ref, store, world, playerUuid, attempt + 1);
                         return;
                     }
 
-                    chunk.setKeepLoaded(true);
-                    System.out.println("[RTP] INIT=" + chunk.is(ChunkFlag.INIT) + " NEWLY_GENERATED="
-                            + chunk.is(ChunkFlag.NEWLY_GENERATED));
-
-                    int localX = worldX & 15;
-                    int localZ = worldZ & 15;
-                    if (localX < 0)
-                        localX += 16;
-                    if (localZ < 0)
-                        localZ += 16;
-
-                    // Get heightmap as starting point
-                    short heightmapY = chunk.getHeight(localX, localZ);
-                    System.out.println("[RTP] Heightmap Y=" + heightmapY);
-
-                    // Debug block data around heightmap
-                    System.out.println("[RTP-DEBUG] Blocks around heightmap:");
-                    for (int dy = 5; dy >= -5; dy--) {
-                        int y = heightmapY + dy;
-                        if (y < 0 || y > 255)
-                            continue;
-                        int bid = chunk.getBlock(localX, y, localZ);
-                        System.out.println("[RTP-DEBUG]   Y=" + y + " blockId=" + bid);
-                    }
-
-                    double teleportY = -1;
-                    boolean found = false;
-
-                    // Scan from heightmap+5 down to heightmap-30
-                    int scanStart = Math.min(heightmapY + 5, 255);
-                    int scanEnd = Math.max(heightmapY - 30, 0);
-
-                    for (int y = scanStart; y >= scanEnd; y--) {
-                        if (chunk.getFluidId(localX, y, localZ) != 0)
-                            continue;
-
-                        int blockId = chunk.getBlock(localX, y, localZ);
-                        if (blockId != 0) {
-                            // Check 3 blocks of head space
-                            int b1 = chunk.getBlock(localX, y + 1, localZ);
-                            int b2 = chunk.getBlock(localX, y + 2, localZ);
-                            int b3 = chunk.getBlock(localX, y + 3, localZ);
-
-                            if (b1 == 0 && b2 == 0 && b3 == 0) {
-                                teleportY = y + 1.0;
-                                found = true;
-                                System.out.println("[RTP] Found ground Y=" + y + " (blockId=" + blockId + ")");
-                                break;
-                            }
-                        }
-                    }
-
-                    if (!found) {
-                        player.sendMessage(Message.raw(config.getMessageNoSafeSpot()));
-                        System.out.println("[RTP] No safe spot found!");
-                        return;
-                    }
+                    double teleportY = safeY + 1.0;
+                    System.out.println("[RTP] Found safe ground at Y=" + safeY + " on attempt " + attempt);
 
                     var transform = store.getComponent(ref, TransformComponent.getComponentType());
                     if (transform != null) {
-                        Vector3d target = new Vector3d(randomX, teleportY, randomZ);
+                        Vector3d target = new Vector3d(fRandomX, teleportY, fRandomZ);
 
                         transform.teleportPosition(target);
 
@@ -273,13 +235,13 @@ public class RandomTeleportCommand extends AbstractAsyncCommand {
                         ModelTransform mt = new ModelTransform(pos, body, look);
                         player.getPlayerConnection().write(new ClientTeleport((byte) 0, mt, true));
 
-                        System.out.println("[RTP] Teleported: X=" + randomX + " Y=" + teleportY + " Z=" + randomZ);
+                        System.out.println("[RTP] Teleported: X=" + fRandomX + " Y=" + teleportY + " Z=" + fRandomZ);
                         cooldowns.put(playerUuid, System.currentTimeMillis());
 
                         String msg = config.getMessageTeleported()
-                                .replace("{x}", String.format("%.0f", randomX))
+                                .replace("{x}", String.format("%.0f", fRandomX))
                                 .replace("{y}", String.format("%.0f", teleportY))
-                                .replace("{z}", String.format("%.0f", randomZ))
+                                .replace("{z}", String.format("%.0f", fRandomZ))
                                 .replace("{distance}", String.format("%.0f", fDistance));
                         player.sendMessage(Message.raw(msg));
                     } else {
@@ -288,6 +250,47 @@ public class RandomTeleportCommand extends AbstractAsyncCommand {
                 });
             });
         });
+    }
+
+    /**
+     * Find safe surface Y coordinate using world coordinates (ScreamingRTP
+     * pattern).
+     * Scans from max height down to find solid ground with headspace and edge
+     * safety.
+     * 
+     * @return Y coordinate of ground block, or -1 if no safe spot found
+     */
+    private int findSafeSurfaceY(World world, int x, int z) {
+        int maxHeight = 255;
+
+        for (int y = maxHeight; y >= 0; y--) {
+            try {
+                int ground = world.getBlock(x, y, z);
+                // Check: solid ground + 2 blocks of AIR headspace (no blocks AND no fluids)
+                if (ground != 0
+                        && world.getBlock(x, y + 1, z) == 0
+                        && world.getBlock(x, y + 2, z) == 0
+                        && world.getFluidId(x, y + 1, z) == 0 // Headspace not underwater
+                        && world.getFluidId(x, y + 2, z) == 0 // Headspace not underwater
+                        && hasSolidAround(world, x, y, z)) {
+                    return y;
+                }
+            } catch (Exception e) {
+                // Skip if block query fails
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * Check if the 4 direct neighbors (N, S, E, W) at the same Y level are solid.
+     * Automatically handles cross-chunk boundaries.
+     */
+    private boolean hasSolidAround(World world, int x, int y, int z) {
+        return world.getBlock(x + 1, y, z) != 0
+                && world.getBlock(x - 1, y, z) != 0
+                && world.getBlock(x, y, z + 1) != 0
+                && world.getBlock(x, y, z - 1) != 0;
     }
 
     private String formatTime(long milliseconds) {
