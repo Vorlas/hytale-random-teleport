@@ -9,6 +9,7 @@ import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.vorlas.randomteleport.config.RandomTeleportConfig;
+import com.vorlas.randomteleport.utils.MessageUtil;
 
 import java.util.Map;
 import java.util.UUID;
@@ -49,7 +50,7 @@ public class WarmupManager {
 
         Vector3d startPos = transform.getPosition();
         String msg = config.getMessageWarmupStart().replace("{seconds}", String.valueOf(warmupSeconds));
-        playerData.sendMessage(Message.raw(msg));
+        playerData.sendMessage(MessageUtil.parseColored(msg));
 
         WarmupData data = new WarmupData(playerData, playerRef, store, world,
                 startPos.x, startPos.y, startPos.z, config.getMovementThreshold());
@@ -89,7 +90,7 @@ public class WarmupManager {
                     double distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
 
                     if (distance > data.movementThreshold) {
-                        data.playerData.sendMessage(Message.raw(config.getMessageMovedCancelled()));
+                        data.playerData.sendMessage(MessageUtil.parseColored(config.getMessageMovedCancelled()));
                         cancelWarmup(playerId);
                     }
                 } catch (Exception ignored) {

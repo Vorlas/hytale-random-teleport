@@ -139,14 +139,6 @@ public class RandomTeleportConfig {
         return data.messages.searching;
     }
 
-    public String getMessageWarning1() {
-        return data.messages.warning1;
-    }
-
-    public String getMessageWarning2() {
-        return data.messages.warning2;
-    }
-
     // Inner data classes
     public static class TierData {
         public String permission = "";
@@ -172,17 +164,15 @@ public class RandomTeleportConfig {
     }
 
     private static class MessagesData {
-        String cooldown = "You must wait {time} before using /rtp again!";
-        String noPermission = "You don't have permission to use /rtp!";
-        String noWorld = "You must be in a world to use this command!";
-        String warmupStart = "Teleporting in {seconds} seconds... Don't move!";
-        String movedCancelled = "Teleportation cancelled! You moved too much.";
-        String noSafeSpot = "Could not find a safe landing spot. Try again!";
-        String error = "Error scanning for safe location.";
-        String teleported = "Teleported to X: {x}, Y: {y}, Z: {z} ({distance} blocks from spawn)";
-        String warning1 = "WARNING: RTP is in early development!";
-        String warning2 = "May teleport to dangerous locations. Move to cancel.";
-        String searching = "Searching for safe location... (attempt {attempt}/{max})";
+        String cooldown = "&5[RTP] &bYou must wait &e{time} &bbefore using /rtp again!";
+        String noPermission = "&5[RTP] &cYou don't have permission to use /rtp!";
+        String noWorld = "&5[RTP] &cYou must be in a world to use this command!";
+        String warmupStart = "&5[RTP] &bTeleporting in &e{seconds} &bseconds... Don't move!";
+        String movedCancelled = "&5[RTP] &cTeleportation cancelled! You moved too much.";
+        String noSafeSpot = "&5[RTP] &cCould not find a safe landing spot. Try again!";
+        String error = "&5[RTP] &cError scanning for safe location.";
+        String teleported = "&5[RTP] &bTeleported to &fX: {x}, Y: {y}, Z: {z} &f({distance} blocks from spawn)";
+        String searching = "&5[RTP] &fSearching for safe location... (attempt {attempt}/{max})";
     }
 
     private static class ConfigData {

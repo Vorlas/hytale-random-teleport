@@ -19,6 +19,7 @@ import com.hypixel.hytale.protocol.Position;
 import com.hypixel.hytale.protocol.Direction;
 import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
 import com.vorlas.randomteleport.utils.WarmupManager;
+import com.vorlas.randomteleport.utils.MessageUtil;
 import com.vorlas.randomteleport.config.RandomTeleportConfig;
 
 import java.util.HashMap;
@@ -125,14 +126,10 @@ public class RandomTeleportCommand extends AbstractAsyncCommand {
                             long remainingMs = cooldownMs - timePassed;
                             String remainingTime = formatTime(remainingMs);
                             String msg = config.getMessageCooldown().replace("{time}", remainingTime);
-                            player.sendMessage(Message.raw(msg));
+                            player.sendMessage(MessageUtil.parseColored(msg));
                             return;
                         }
                     }
-
-                    // Show warning message
-                    player.sendMessage(Message.raw(config.getMessageWarning1()));
-                    player.sendMessage(Message.raw(config.getMessageWarning2()));
 
                     // Get tier-based warmup for this player
                     int warmupSeconds = getWarmupForPlayer(player);
@@ -148,7 +145,7 @@ public class RandomTeleportCommand extends AbstractAsyncCommand {
 
                 }, world);
             } else {
-                player.sendMessage(Message.raw(config.getMessageNoWorld()));
+                player.sendMessage(MessageUtil.parseColored(config.getMessageNoWorld()));
                 return CompletableFuture.completedFuture(null);
             }
         } else {
@@ -167,7 +164,7 @@ public class RandomTeleportCommand extends AbstractAsyncCommand {
         int maxAttempts = config.getMaxAttempts();
 
         if (attempt > maxAttempts) {
-            player.sendMessage(Message.raw(config.getMessageNoSafeSpot()));
+            player.sendMessage(MessageUtil.parseColored(config.getMessageNoSafeSpot()));
             System.out.println("[RTP] Failed after " + maxAttempts + " attempts!");
             return;
         }
@@ -176,7 +173,7 @@ public class RandomTeleportCommand extends AbstractAsyncCommand {
         String searchMsg = config.getMessageSearching()
                 .replace("{attempt}", String.valueOf(attempt))
                 .replace("{max}", String.valueOf(maxAttempts));
-        player.sendMessage(Message.raw(searchMsg));
+        player.sendMessage(MessageUtil.parseColored(searchMsg));
 
         int min = config.getMinDistance();
         int max = config.getMaxDistance();
@@ -243,9 +240,9 @@ public class RandomTeleportCommand extends AbstractAsyncCommand {
                                 .replace("{y}", String.format("%.0f", teleportY))
                                 .replace("{z}", String.format("%.0f", fRandomZ))
                                 .replace("{distance}", String.format("%.0f", fDistance));
-                        player.sendMessage(Message.raw(msg));
+                        player.sendMessage(MessageUtil.parseColored(msg));
                     } else {
-                        player.sendMessage(Message.raw(config.getMessageError()));
+                        player.sendMessage(MessageUtil.parseColored(config.getMessageError()));
                     }
                 });
             });
