@@ -1,7 +1,7 @@
 {
     "Group": "",
     "Name": "RandomTeleport",
-    "Version": "1.1.0",
+    "Version": "1.1.1",
     "Description": "Randomly teleports players to safe locations in the world",
     "Authors": [
         {
@@ -12,7 +12,7 @@
     ],
     "Website": "https://github.com/Vorlas/hytale-random-teleport",
     "Main": "com.vorlas.randomteleport.RandomTeleportPlugin",
-    "ServerVersion": "*",
+    "ServerVersion": "2026.02.17-255364b8e",
     "Dependencies": {
         
     },

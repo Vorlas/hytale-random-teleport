@@ -43,6 +43,22 @@ if (!isCI) {
     }
 }
 
+repositories {
+    mavenCentral()
+
+    // Hytale release repository
+    maven {
+        name = "hytale-release"
+        url = uri("https://maven.hytale.com/release")
+    }
+
+    // Hytale pre-release repository
+    maven {
+        name = "hytale-pre-release"
+        url = uri("https://maven.hytale.com/pre-release")
+    }
+}
+
 java {
     toolchain.languageVersion = JavaLanguageVersion.of(java_version)
     withSourcesJar()
@@ -55,15 +71,9 @@ javadoc {
 }
 
 // Adds the Hytale server as a build dependency, allowing you to reference and
-// compile against their code. This requires you to have Hytale installed using
-// the official launcher for now. In CI, we use a local copy of the JAR.
+// compile against their code.
 dependencies {
-    if (isCI) {
-        // In CI environments, use a local copy of HytaleServer.jar in the libs folder
-        implementation(files("$projectDir/libs/HytaleServer.jar"))
-    } else {
-        implementation(files("$hytaleHome/install/$patchline/package/game/latest/Server/HytaleServer.jar"))
-    }
+    compileOnly("com.hypixel.hytale:Server:${hytale_version}")
 }
 
 // Create the working directory to run the server if it does not already exist.
