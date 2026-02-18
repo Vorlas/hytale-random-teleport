@@ -13,10 +13,7 @@ import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.server.core.Message;
-import com.hypixel.hytale.protocol.packets.player.ClientTeleport;
-import com.hypixel.hytale.protocol.ModelTransform;
-import com.hypixel.hytale.protocol.Position;
-import com.hypixel.hytale.protocol.Direction;
+import com.hypixel.hytale.server.core.modules.entity.teleport.Teleport;
 import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
 import com.vorlas.randomteleport.utils.WarmupManager;
 import com.vorlas.randomteleport.utils.MessageUtil;
@@ -262,13 +259,8 @@ public class RandomTeleportCommand extends AbstractAsyncCommand {
                     if (transform != null) {
                         Vector3d target = new Vector3d(fRandomX, teleportY, fRandomZ);
 
-                        transform.teleportPosition(target);
-
-                        Position pos = new Position(target.x, target.y, target.z);
-                        Direction body = new Direction(0f, 0f, 0f);
-                        Direction look = new Direction(0f, 0f, 0f);
-                        ModelTransform mt = new ModelTransform(pos, body, look);
-                        player.getPlayerConnection().write(new ClientTeleport((byte) 0, mt, true));
+                        Teleport teleport = Teleport.createForPlayer(target, transform.getRotation());
+                        store.addComponent(ref, Teleport.getComponentType(), teleport);
 
                         System.out.println("[RTP] Teleported: X=" + fRandomX + " Y=" + teleportY + " Z=" + fRandomZ);
                         cooldowns.put(playerUuid, System.currentTimeMillis());
