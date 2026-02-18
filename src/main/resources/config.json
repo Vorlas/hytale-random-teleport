@@ -1,11 +1,17 @@
 {
   "pluginName": "RandomTeleport",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "debugMode": false,
+  "command": {
+    "name": "rtp",
+    "aliases": ["randomtp", "randomteleport"],
+    "description": "Randomly teleports you away from spawn"
+  },
   "permissions": {
     "use": "randomteleport.use",
     "bypassCooldown": "randomteleport.bypass.cooldown",
-    "bypassWarmup": "randomteleport.bypass.warmup"
+    "bypassWarmup": "randomteleport.bypass.warmup",
+    "teleportOther": "randomteleport.admin.teleportother"
   },
   "tiers": {
     "diamond": {
@@ -47,6 +53,9 @@
     "noSafeSpot": "Could not find a safe landing spot. Try again!",
     "error": "Error scanning for safe location.",
     "teleported": "Teleported to X: {x}, Y: {y}, Z: {z} ({distance} blocks from spawn)",
+    "teleportedOther": "Teleported {player} to X: {x}, Y: {y}, Z: {z} ({distance} blocks from spawn)",
+    "noPermissionOther": "You don't have permission to teleport other players!",
+    "targetNotFound": "Target player is not in a world!",
     "warning1": "WARNING: RTP is in early development!",
     "warning2": "May teleport to dangerous locations. Move to cancel."
   }

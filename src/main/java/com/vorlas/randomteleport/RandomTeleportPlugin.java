@@ -15,7 +15,7 @@ import java.util.logging.Level;
  * cooldown
  * 
  * @author Vorlas
- * @version 1.1.0
+ * @version 1.2.0
  */
 public class RandomTeleportPlugin extends JavaPlugin {
 

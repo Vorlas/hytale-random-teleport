@@ -7,7 +7,10 @@ import java.io.Reader;
 import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 public class RandomTeleportConfig {
@@ -51,6 +54,19 @@ public class RandomTeleportConfig {
         }
     }
 
+    // Command getters
+    public String getCommandName() {
+        return data.command.name;
+    }
+
+    public String[] getCommandAliases() {
+        return data.command.aliases.toArray(new String[0]);
+    }
+
+    public String getCommandDescription() {
+        return data.command.description;
+    }
+
     // Permission getters
     public String getUsePermission() {
         return data.permissions.use;
@@ -62,6 +78,10 @@ public class RandomTeleportConfig {
 
     public String getBypassWarmupPermission() {
         return data.permissions.bypassWarmup;
+    }
+
+    public String getTeleportOtherPermission() {
+        return data.permissions.teleportOther;
     }
 
     // Tier getters
@@ -139,6 +159,18 @@ public class RandomTeleportConfig {
         return data.messages.searching;
     }
 
+    public String getMessageTeleportedOther() {
+        return data.messages.teleportedOther;
+    }
+
+    public String getMessageNoPermissionOther() {
+        return data.messages.noPermissionOther;
+    }
+
+    public String getMessageTargetNotFound() {
+        return data.messages.targetNotFound;
+    }
+
     // Inner data classes
     public static class TierData {
         public String permission = "";
@@ -150,10 +182,17 @@ public class RandomTeleportConfig {
         public int maxHeight = -1;
     }
 
+    private static class CommandData {
+        String name = "rtp";
+        List<String> aliases = new ArrayList<>(Arrays.asList("randomtp", "randomteleport"));
+        String description = "Randomly teleports you away from spawn";
+    }
+
     private static class PermissionsData {
         String use = "randomteleport.use";
         String bypassCooldown = "randomteleport.bypass.cooldown";
         String bypassWarmup = "randomteleport.bypass.warmup";
+        String teleportOther = "randomteleport.admin.teleportother";
     }
 
     private static class DefaultsData {
@@ -177,12 +216,16 @@ public class RandomTeleportConfig {
         String error = "&5[RTP] &cError scanning for safe location.";
         String teleported = "&5[RTP] &bTeleported to &fX: {x}, Y: {y}, Z: {z} &f({distance} blocks from spawn)";
         String searching = "&5[RTP] &fSearching for safe location... (attempt {attempt}/{max})";
+        String teleportedOther = "&5[RTP] &bTeleported &e{player} &bto &fX: {x}, Y: {y}, Z: {z} &f({distance} blocks from spawn)";
+        String noPermissionOther = "&5[RTP] &cYou don't have permission to teleport other players!";
+        String targetNotFound = "&5[RTP] &cTarget player is not in a world!";
     }
 
     private static class ConfigData {
         String pluginName = "RandomTeleport";
-        String version = "1.1.0";
+        String version = "1.2.0";
         boolean debugMode = false;
+        CommandData command = new CommandData();
         PermissionsData permissions = new PermissionsData();
         Map<String, TierData> tiers = createDefaultTiers();
         DefaultsData defaults = new DefaultsData();

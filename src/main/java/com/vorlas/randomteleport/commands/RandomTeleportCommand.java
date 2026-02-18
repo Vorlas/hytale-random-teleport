@@ -9,6 +9,8 @@ import com.hypixel.hytale.server.core.command.system.CommandSender;
 import com.hypixel.hytale.server.core.command.system.basecommands.AbstractAsyncCommand;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.modules.entity.component.TransformComponent;
+import com.hypixel.hytale.server.core.command.system.arguments.system.OptionalArg;
+import com.hypixel.hytale.server.core.command.system.arguments.types.ArgTypes;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
@@ -35,12 +37,14 @@ public class RandomTeleportCommand extends AbstractAsyncCommand {
     private final Map<UUID, Long> cooldowns = new HashMap<>();
     private final WarmupManager warmupManager;
     private final RandomTeleportConfig config;
+    private final OptionalArg<PlayerRef> targetPlayerArg;
 
     public RandomTeleportCommand(RandomTeleportConfig config) {
-        super("rtp", "Randomly teleports you away from spawn");
-        this.addAliases("randomtp", "randomteleport");
+        super(config.getCommandName(), config.getCommandDescription());
+        this.addAliases(config.getCommandAliases());
         this.setPermissionGroup(GameMode.Adventure);
         this.requirePermission(config.getUsePermission());
+        this.targetPlayerArg = this.withOptionalArg("player", "Target player to teleport", ArgTypes.PLAYER_REF);
         this.warmupManager = new WarmupManager(config);
         this.config = config;
     }
@@ -129,9 +133,33 @@ public class RandomTeleportCommand extends AbstractAsyncCommand {
     @Override
     protected CompletableFuture<Void> executeAsync(CommandContext commandContext) {
         CommandSender sender = commandContext.sender();
-        if (sender instanceof Player player) {
-            // Permission already checked via requirePermission() in constructor
+        boolean targetingOther = targetPlayerArg.provided(commandContext);
 
+        if (targetingOther) {
+            // /rtp <player> — admin or console targeting another player
+            if (sender instanceof Player senderPlayer
+                    && !senderPlayer.hasPermission(config.getTeleportOtherPermission(), false)) {
+                senderPlayer.sendMessage(MessageUtil.parseColored(config.getMessageNoPermissionOther()));
+                return CompletableFuture.completedFuture(null);
+            }
+
+            PlayerRef targetPlayerRef = targetPlayerArg.get(commandContext);
+            Ref<EntityStore> targetRef = targetPlayerRef.getReference();
+            if (targetRef == null || !targetRef.isValid()) {
+                sender.sendMessage(MessageUtil.parseColored(config.getMessageTargetNotFound()));
+                return CompletableFuture.completedFuture(null);
+            }
+
+            Store<EntityStore> store = targetRef.getStore();
+            World world = store.getExternalData().getWorld();
+            return CompletableFuture.runAsync(() -> {
+                UUID targetUuid = targetPlayerRef.getUuid();
+                // Admin teleport skips cooldown and warmup
+                executeRandomTeleport(sender, targetPlayerRef, targetRef, store, world, targetUuid, true);
+            }, world);
+
+        } else if (sender instanceof Player player) {
+            // /rtp — self teleport (existing behavior)
             Ref<EntityStore> ref = player.getReference();
             if (ref != null && ref.isValid()) {
                 Store<EntityStore> store = ref.getStore();
@@ -167,10 +195,10 @@ public class RandomTeleportCommand extends AbstractAsyncCommand {
 
                     if (warmupSeconds <= 0) {
                         // Bypass warmup - teleport immediately
-                        executeRandomTeleport(player, ref, store, world, playerUuid);
+                        executeRandomTeleport(sender, playerRef, ref, store, world, playerUuid, false);
                     } else {
                         warmupManager.startWarmup(playerRef, ref, store, world, warmupSeconds, () -> {
-                            executeRandomTeleport(player, ref, store, world, playerUuid);
+                            executeRandomTeleport(sender, playerRef, ref, store, world, playerUuid, false);
                         });
                     }
 
@@ -184,30 +212,36 @@ public class RandomTeleportCommand extends AbstractAsyncCommand {
         }
     }
 
-    private void executeRandomTeleport(Player player, Ref<EntityStore> ref, Store<EntityStore> store, World world,
-            UUID playerUuid) {
+    private void executeRandomTeleport(CommandSender sender, PlayerRef targetPlayerRef,
+            Ref<EntityStore> ref, Store<EntityStore> store, World world, UUID playerUuid, boolean isAdmin) {
         // Start the retry loop with attempt 1
-        tryRandomLocation(player, ref, store, world, playerUuid, 1);
+        tryRandomLocation(sender, targetPlayerRef, ref, store, world, playerUuid, 1, isAdmin);
     }
 
-    private void tryRandomLocation(Player player, Ref<EntityStore> ref, Store<EntityStore> store, World world,
-            UUID playerUuid, int attempt) {
+    private void tryRandomLocation(CommandSender sender, PlayerRef targetPlayerRef,
+            Ref<EntityStore> ref, Store<EntityStore> store, World world,
+            UUID playerUuid, int attempt, boolean isAdmin) {
         int maxAttempts = config.getMaxAttempts();
 
         if (attempt > maxAttempts) {
-            player.sendMessage(MessageUtil.parseColored(config.getMessageNoSafeSpot()));
+            sender.sendMessage(MessageUtil.parseColored(config.getMessageNoSafeSpot()));
             System.out.println("[RTP] Failed after " + maxAttempts + " attempts!");
             return;
         }
 
-        // Show searching message to player
+        // Show searching message
         String searchMsg = config.getMessageSearching()
                 .replace("{attempt}", String.valueOf(attempt))
                 .replace("{max}", String.valueOf(maxAttempts));
-        player.sendMessage(MessageUtil.parseColored(searchMsg));
+        sender.sendMessage(MessageUtil.parseColored(searchMsg));
 
-        // Get tier-based distance range
-        int[] distanceRange = getDistanceForPlayer(player);
+        // Get distance range — use defaults for admin teleports, tier-based for self
+        int[] distanceRange;
+        if (!isAdmin && sender instanceof Player player) {
+            distanceRange = getDistanceForPlayer(player);
+        } else {
+            distanceRange = new int[] { config.getMinDistance(), config.getMaxDistance() };
+        }
         int min = distanceRange[0];
         int max = distanceRange[1];
         double distance = min + random.nextDouble() * (max - min);
@@ -241,14 +275,19 @@ public class RandomTeleportCommand extends AbstractAsyncCommand {
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).thenRun(() -> {
             CompletableFuture.delayedExecutor(500, TimeUnit.MILLISECONDS).execute(() -> {
                 world.execute(() -> {
-                    // Get tier-based height range
-                    int[] heightRange = getHeightForPlayer(player);
+                    // Get height range — use defaults for admin, tier-based for self
+                    int[] heightRange;
+                    if (!isAdmin && sender instanceof Player player) {
+                        heightRange = getHeightForPlayer(player);
+                    } else {
+                        heightRange = new int[] { config.getMinHeight(), config.getMaxHeight() };
+                    }
                     int safeY = findSafeSurfaceY(world, worldX, worldZ, heightRange[0], heightRange[1]);
 
                     if (safeY < 0) {
                         // Try another location
                         System.out.println("[RTP] Attempt " + attempt + " failed - no safe spot, retrying...");
-                        tryRandomLocation(player, ref, store, world, playerUuid, attempt + 1);
+                        tryRandomLocation(sender, targetPlayerRef, ref, store, world, playerUuid, attempt + 1, isAdmin);
                         return;
                     }
 
@@ -265,14 +304,24 @@ public class RandomTeleportCommand extends AbstractAsyncCommand {
                         System.out.println("[RTP] Teleported: X=" + fRandomX + " Y=" + teleportY + " Z=" + fRandomZ);
                         cooldowns.put(playerUuid, System.currentTimeMillis());
 
-                        String msg = config.getMessageTeleported()
-                                .replace("{x}", String.format("%.0f", fRandomX))
-                                .replace("{y}", String.format("%.0f", teleportY))
-                                .replace("{z}", String.format("%.0f", fRandomZ))
-                                .replace("{distance}", String.format("%.0f", fDistance));
-                        player.sendMessage(MessageUtil.parseColored(msg));
+                        if (isAdmin) {
+                            String msg = config.getMessageTeleportedOther()
+                                    .replace("{player}", targetPlayerRef.getUsername())
+                                    .replace("{x}", String.format("%.0f", fRandomX))
+                                    .replace("{y}", String.format("%.0f", teleportY))
+                                    .replace("{z}", String.format("%.0f", fRandomZ))
+                                    .replace("{distance}", String.format("%.0f", fDistance));
+                            sender.sendMessage(MessageUtil.parseColored(msg));
+                        } else {
+                            String msg = config.getMessageTeleported()
+                                    .replace("{x}", String.format("%.0f", fRandomX))
+                                    .replace("{y}", String.format("%.0f", teleportY))
+                                    .replace("{z}", String.format("%.0f", fRandomZ))
+                                    .replace("{distance}", String.format("%.0f", fDistance));
+                            sender.sendMessage(MessageUtil.parseColored(msg));
+                        }
                     } else {
-                        player.sendMessage(MessageUtil.parseColored(config.getMessageError()));
+                        sender.sendMessage(MessageUtil.parseColored(config.getMessageError()));
                     }
                 });
             });
